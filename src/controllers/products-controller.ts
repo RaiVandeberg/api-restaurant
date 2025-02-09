@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import { AppError } from "@/utils/AppError";
 import { knex } from "@/database/knex";
 import { z } from "zod"
 
@@ -62,7 +63,13 @@ class ProductConstroller {
 
       const { name, price } = bodySchema.parse(request.body)
 
-      await knex<ProductRepository>("products").update({ name, price, updated_at: knex.fn.now()}).where({id})
+      const product = await knex<ProductRepository>("products").select().where({ id }).first()
+
+      if(!product){
+        throw new Error("Produto não encontado")
+      }
+
+      await knex<ProductRepository>("products").update({ name, price, updated_at: knex.fn.now()}).where({ id })
 
       return response.json()
 
@@ -74,11 +81,18 @@ class ProductConstroller {
     async remove(request: Request, response: Response, next: NextFunction){
       try {
 
-        const id = z
+      const id = z
       .string()
       .transform((value) => Number(value))
       .refine((value) => !isNaN(value), { message: "id tem que ser um numero"})
       .parse(request.params.id)
+      const product = await knex<ProductRepository>("products").select().where( { id }).first()
+
+        if(!product){
+          throw new AppError("Produto não encotrado")
+        }
+
+      await knex<ProductRepository>("products").delete().where({ id })
         
       } catch (error) {
         next(error)
