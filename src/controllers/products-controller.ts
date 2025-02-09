@@ -62,10 +62,27 @@ class ProductConstroller {
 
       const { name, price } = bodySchema.parse(request.body)
 
-      return response.json({ message: "upadte"})
+      await knex<ProductRepository>("products").update({ name, price, updated_at: knex.fn.now()}).where({id})
+
+      return response.json()
+
      } catch (error) {
       next(error)
      }
+    }
+
+    async remove(request: Request, response: Response, next: NextFunction){
+      try {
+
+        const id = z
+      .string()
+      .transform((value) => Number(value))
+      .refine((value) => !isNaN(value), { message: "id tem que ser um numero"})
+      .parse(request.params.id)
+        
+      } catch (error) {
+        next(error)
+      }
     }
 }
 
