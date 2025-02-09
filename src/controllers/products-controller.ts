@@ -1,12 +1,19 @@
 import { NextFunction, Request, Response } from "express";
+import { knex } from "@/database/knex";
 import { z } from "zod"
 
 
 class ProductConstroller {
     async index(request: Request, response: Response, next: NextFunction) {
        try {
+        const { name } = request.query
+        const products = await knex<ProductRepository>("products")
+        .select()
+        .whereLike("name",`%${name ?? ""}%`)
+        .orderBy("name")
+       
         
-        return response.json({ message: "Hello World" });
+        return response.json(products);
        } catch (error) {
          next(error);
        }
@@ -15,7 +22,7 @@ class ProductConstroller {
 
     async create(request: Request, response: Response, next: NextFunction){
       try {
-        const bodySchema =z.object({
+        const bodySchema = z.object({
           name: z
           .string()
           .trim()
@@ -27,10 +34,38 @@ class ProductConstroller {
 
         const { name, price } = bodySchema.parse(request.body)
 
-        return response.status(201).json({ name, price})
+        await knex<ProductRepository>("products").insert({ name, price })
+
+        return response.status(201).json()
       } catch (error) {
         next(error)
       }
+    }
+
+    async update (request: Request, response: Response, next: NextFunction){
+     try {
+      const id = z
+      .string()
+      .transform((value) => Number(value))
+      .refine((value) => !isNaN(value), { message: "id tem que ser um numero"})
+      .parse(request.params.id)
+
+      const bodySchema = z.object({
+        name: z
+        .string()
+        .trim()
+        .min(6),
+        price: z
+        .number()
+        .gt(0)
+      })
+
+      const { name, price } = bodySchema.parse(request.body)
+
+      return response.json({ message: "upadte"})
+     } catch (error) {
+      next(error)
+     }
     }
 }
 

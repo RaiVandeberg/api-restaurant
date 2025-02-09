@@ -6,5 +6,6 @@ const productController = new ProductConstroller()
 
 productsRouter.get("/", productController.index)
 productsRouter.post("/", productController.create)
+productsRouter.put("/:id", productController.update)
 
 export { productsRouter}
