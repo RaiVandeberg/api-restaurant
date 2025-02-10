@@ -93,6 +93,7 @@ class ProductConstroller {
         }
 
       await knex<ProductRepository>("products").delete().where({ id })
+      return response.status(201).json()
         
       } catch (error) {
         next(error)
